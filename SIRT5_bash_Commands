@@ -1,0 +1,31 @@
+#fastq data
+
+A1_S73_L002_R1_001.fastq.gz  A7_S79_L002_R1_001.fastq.gz  B5_S85_L002_R1_001.fastq.gz
+A1_S73_L002_R2_001.fastq.gz  A7_S79_L002_R2_001.fastq.gz  B5_S85_L002_R2_001.fastq.gz
+A2_S74_L002_R1_001.fastq.gz  A8_S80_L002_R1_001.fastq.gz  B6_S86_L002_R1_001.fastq.gz
+A2_S74_L002_R2_001.fastq.gz  A8_S80_L002_R2_001.fastq.gz  B6_S86_L002_R2_001.fastq.gz
+A3_S75_L002_R1_001.fastq.gz  B1_S81_L002_R1_001.fastq.gz  B7_S87_L002_R1_001.fastq.gz
+A3_S75_L002_R2_001.fastq.gz  B1_S81_L002_R2_001.fastq.gz  B7_S87_L002_R2_001.fastq.gz
+A4_S76_L002_R1_001.fastq.gz  B2_S82_L002_R1_001.fastq.gz  B8_S88_L002_R1_001.fastq.gz
+A4_S76_L002_R2_001.fastq.gz  B2_S82_L002_R2_001.fastq.gz  B8_S88_L002_R2_001.fastq.gz
+A5_S77_L002_R1_001.fastq.gz  B3_S83_L002_R1_001.fastq.gz
+A5_S77_L002_R2_001.fastq.gz  B3_S83_L002_R2_001.fastq.gz
+A6_S78_L002_R1_001.fastq.gz  B4_S84_L002_R1_001.fastq.gz
+A6_S78_L002_R2_001.fastq.gz  B4_S84_L002_R2_001.fastq.gz
+
+#download genome
+http://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/GRCh38.primary_assembly.genome.fa.gz
+
+#Make composite GRCh38 and SARS-CoV-2 composite fasta: GRCh38_SARS2.fa
+#And composite gtf with Gencode (release 38) and SArS-Cov-2: Composite.gtf
+
+#Make Subread genome index
+subread-buildindex -o my index GRCh38_SARS2.fa
+
+#Map with Subread
+for i in A1_S73 A2_S74 A3_S75 A4_S76 A5_S77 A6_S78 A7_S79 A8_S80 B1_S81 B2_S82 B3_S83 B4_S84 B5_S85 B6_S86 B7_S87 B8_S88; do
+subread-align -t 0 -T 2 -d 50 -D 600 -i my_index -r /data//${i}_L002_R1_001.fastq.gz -R /data/${i}_L002_R2_001.fastq.gz -o Mapped/${i}_PE.bam -a /Genome/Composite.gtf > ${i}.output  &
+done
+
+#Count with Subread featureCounts
+featureCounts -p -s 2 -T 16 -t exon -g gene_id -a /home/mwalter/SARS-2/Genome/Composite.gtf -o /home/mwalter/SARS-2/Subread/Subread.count /home/mwalter/SARS-2/Subread/Mapped/*_PE.bam  &
